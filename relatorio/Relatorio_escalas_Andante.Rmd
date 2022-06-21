@@ -1,0 +1,1079 @@
+---
+title: "Análises psicométricas das Escalas Andante"
+author: "Gustavo Henrique Martins"
+date: "Relatório produzido em: `r format(Sys.time(), '%d %B, %Y')`"
+output:
+  html_document:
+    css: style.css
+    theme: united
+    toc: true
+    toc_float:
+      collapsed: false
+      smooth_scroll: true
+    toc_depth: 3
+    number_sections: false
+    code_folding: hide
+    code_download: true
+bibliography: references.bib
+link-citations: true
+---
+
+```{r setup, warning=FALSE, message=FALSE, include=FALSE}
+knitr::opts_chunk$set(warning=FALSE, message=FALSE)
+```
+
+```{r pacotes_db}
+# Pacotes -----------------------------------------------------------------
+library(haven)
+library(jmv)
+library(tidyverse)
+library(lavaan)
+library(reactable)
+
+# Bases de dados ----------------------------------------------------------
+# importar o banco de dados
+banco_andante <- read_sav(here::here("banco/Banco escalas Andante_2022-06-21.sav"))
+```
+
+# Esclarecimentos
+Este relatório foi feito com o intuito de descrever as evidências de validade e as estimativas de precisão de três escalas construídas para integrar o método Andando Juntos da Andante Carreira. As escalas são: Escala Andante de Autoeficácia para Decisão de Carreira (EAADC), Escala Andante de Indecisão de Carreira (EAIC) e Escala Andante de Interesses Profissionais (EAIP).
+
+
+# Banco de dados 
+```{r}
+# vizualizar o banco de dados
+reactable(banco_andante)
+```
+
+# Descrição da amostra {.tabset .tabset-fade}
+
+## Descrição
+A amostra deste relatório foi composta por `r nrow(banco_andante)` pessoas, sendo `r banco_andante %>% filter(Situacao_atual == 4) %>% nrow()` estudantes do Ensino Médio, `r banco_andante %>% filter(Situacao_atual == 1) %>% nrow()` estuadantes universitários, `r banco_andante %>% filter(Situacao_atual == 2) %>% nrow()` trabalhadores e `r banco_andante %>% filter(Situacao_atual == 3) %>% nrow()` estudantes universitários trabalhadores.   
+
+
+## Estatísticas
+```{r}
+# gerar descritivas
+descriptives(
+  data = banco_andante,
+  vars = Idade,
+  median = FALSE
+)
+
+descriptives(
+  data = banco_andante,
+  vars = vars(Sexo, Raca, Estado, Tamanho_cidade, Estado_civil, Grau_escolaridade, Situacao_Mercado_Trabalho, Renda_individual, Situacao_carreira, Sucesso_profissional, Situacao_atual, Escolha_apos_ensino_medio, Escola, Turno_escola, Semestre, Faculdade, Turno_faculdade, Tempo_trabalho, Atividade_remunerada, Horas_Trabalho, Turno_trabalho, Perder_emprego),
+  freq = TRUE,
+  n = FALSE,
+  missing = FALSE,
+  mean = FALSE,
+  median = FALSE,
+  sd = FALSE,
+  min = FALSE,
+  max = FALSE
+)
+
+descriptives(
+  data = banco_andante,
+  vars = vars(ce01, an01, EAIP1, EAE1, CIP1, RAtiv1, REST1),
+  mean = FALSE,
+  median = FALSE,
+  sd = FALSE,
+  min = FALSE,
+  max = FALSE
+)
+```
+
+
+
+# EAADC {.tabset .tabset-fade}
+
+## AFE 2 Fatores
+```{r}
+# modelo
+AFE_EAADC.model <- '
+efa("efa")*f1 +
+efa("efa")*f2 =~ 
+ce01 +
+cd01 +
+ce02 +
+cd02 +
+ce03 +
+cd03 +
+ce04 +
+cd04 +
+ce05 +
+cd05 +
+ce06 +
+cd06 +
+ce07 +
+cd07 +
+ce08 +
+cd08 +
+ce09 +
+cd09 +
+ce10 +
+cd10 +
+ce11 +
+cd11 +
+ce12 +
+cd12 
+'
+
+# rodar AFC unifatorial
+fit_AFE_EAADC <- sem(
+  model = AFE_EAADC.model,
+  data = banco_andante,
+  ordered = names(banco_andante), 
+  estimator = "WLSMV"
+)
+```
+
+```{r}
+# visualizar resultados AFC
+summary(fit_AFE_EAADC, fit.measures=TRUE, standardized = TRUE)
+```
+
+## AFC 2 fatores
+```{r}
+# modelo
+AFC_EAADC.model <- '
+explora =~ 
+ce01 +
+ce02 +
+ce03 +
+ce04 +
+ce05 +
+ce06 +
+ce07 +
+ce08 +
+ce09 +
+ce10 +
+ce11 +
+ce12
+
+decision =~ 
+cd01 +
+cd02 +
+cd03 +
+cd04 +
+cd05 +
+cd06 +
+cd07 +
+cd08 +
+cd09 +
+cd10 +
+cd11 +
+cd12 
+'
+
+# rodar AFC unifatorial
+fit_AFC_EAADC <- sem(
+  model = AFC_EAADC.model,
+  data = banco_andante,
+  ordered = names(banco_andante), 
+  estimator = "WLSMV"
+)
+```
+
+```{r}
+# visualizar resultados AFC
+summary(fit_AFC_EAADC, fit.measures=TRUE, standardized = TRUE)
+```
+
+
+## AFC hierárquica
+```{r}
+# modelo
+AFC_EAADC_hierarquica.model <- '
+explora =~ 
+ce01 +
+ce02 +
+ce03 +
+ce04 +
+ce05 +
+ce06 +
+ce07 +
+ce08 +
+ce09 +
+ce10 +
+ce11 +
+ce12
+
+decision =~ 
+cd01 +
+cd02 +
+cd03 +
+cd04 +
+cd05 +
+cd06 +
+cd07 +
+cd08 +
+cd09 +
+cd10 +
+cd11 +
+cd12 
+
+autoef =~ 
+explora +
+decision
+'
+
+# rodar AFC unifatorial
+fit_AFC_EAADC_hierarquica <- sem(
+  model = AFC_EAADC_hierarquica.model,
+  data = banco_andante,
+  ordered = names(banco_andante), 
+  estimator = "WLSMV"
+)
+```
+
+```{r}
+# visualizar resultados AFC
+summary(fit_AFC_EAADC_hierarquica, fit.measures=TRUE, standardized = TRUE)
+```
+
+## Precisão
+Competências Exploratórias
+```{r}
+# rodar alfa e omega
+reliability(
+  data = banco_andante,
+  vars = vars(
+    ce01,
+    ce02,
+    ce03,
+    ce04,
+    ce05,
+    ce06,
+    ce07,
+    ce08,
+    ce09,
+    ce10,
+    ce11,
+    ce12
+  ),
+  omegaScale = TRUE,
+  alphaItems = TRUE,
+  omegaItems = TRUE
+)
+```
+
+Competências Decisionais
+```{r}
+# rodar alfa e omega
+reliability(
+  data = banco_andante,
+  vars = vars(
+    cd01,
+    cd02,
+    cd03,
+    cd04,
+    cd05,
+    cd06,
+    cd07,
+    cd08,
+    cd09,
+    cd10,
+    cd11,
+    cd12
+  ),
+  omegaScale = TRUE,
+  alphaItems = TRUE,
+  omegaItems = TRUE
+)
+```
+
+Autoeficácia para Decisão de Carreira
+```{r}
+# rodar alfa e omega
+reliability(
+  data = banco_andante,
+  vars = vars(
+    ce01,
+    ce02,
+    ce03,
+    ce04,
+    ce05,
+    ce06,
+    ce07,
+    ce08,
+    ce09,
+    ce10,
+    ce11,
+    ce12,
+    cd01,
+    cd02,
+    cd03,
+    cd04,
+    cd05,
+    cd06,
+    cd07,
+    cd08,
+    cd09,
+    cd10,
+    cd11,
+    cd12
+  ),
+  omegaScale = TRUE,
+  alphaItems = TRUE,
+  omegaItems = TRUE
+)
+```
+
+
+# EAIC {.tabset .tabset-fade}
+
+## AFE 4 fatores
+```{r}
+# modelo
+AFE_EAIC.model <- '
+efa("efa")*f1 +
+efa("efa")*f2 +
+efa("efa")*f3 +
+efa("efa")*f4 =~ 
+an01 +
+ae01 +
+dd01 +
+ci01 +
+an02 +
+ae02 +
+dd02 +
+ci02 +
+an03 +
+ae03 +
+dd03 +
+ci03 +
+an04 +
+ae04 +
+dd04 +
+ci04 +
+an05 +
+ae05 +
+dd05 +
+ci05 +
+an06 +
+ae06 +
+dd06 +
+ci06 +
+an07 +
+ae07 +
+dd07 +
+ci07 +
+an08 +
+ae08 +
+dd08 +
+ci08 +
+an09 +
+ae09 +
+dd09 +
+ci09 +
+an10 +
+ae10 +
+dd10 +
+ci10 +
+an11 +
+ae11 +
+dd11 +
+ci11 +
+an12 +
+ae12 +
+dd12 +
+ci12
+'
+
+# rodar AFC unifatorial
+fit_AFE_EAIC <- sem(
+  model = AFE_EAIC.model,
+  data = banco_andante,
+  ordered = names(banco_andante), 
+  estimator = "WLSMV"
+)
+```
+
+```{r}
+# visualizar resultados AFC
+summary(fit_AFE_EAIC, fit.measures=TRUE, standardized = TRUE)
+```
+
+## AFC 4 fatores
+```{r}
+# modelo
+AFC_EAIC.model <- '
+AfeNeg =~ 
+an01 +
+an02 +
+an03 +
+an04 +
+an05 +
+an06 +
+an07 +
+an08 +
+an09 +
+an10 +
+an11 +
+an12
+
+AnsEsc =~ 
+ae01 +
+ae02 +
+ae03 +
+ae04 +
+ae05 +
+ae06 +
+ae07 +
+ae08 +
+ae09 +
+ae10 +
+ae11 +
+ae12
+
+DifDec =~ 
+dd01 +
+dd02 +
+dd03 +
+dd04 +
+dd05 +
+dd06 +
+dd07 +
+dd08 +
+dd09 +
+dd10 +
+dd11 +
+dd12
+
+ConInt =~ 
+ci01 +
+ci02 +
+ci03 +
+ci04 +
+ci05 +
+ci06 +
+ci07 +
+ci08 +
+ci09 +
+ci10 +
+ci11 +
+ci12
+'
+
+# rodar AFC unifatorial
+fit_AFC_EAIC <- sem(
+  model = AFC_EAIC.model,
+  data = banco_andante,
+  ordered = names(banco_andante), 
+  estimator = "WLSMV"
+)
+```
+
+```{r}
+# visualizar resultados AFC
+summary(fit_AFC_EAIC, fit.measures=TRUE, standardized = TRUE)
+```
+
+## AFC hierárquica
+```{r}
+# modelo
+AFC_EAIC_hierarquica.model <- '
+AfeNeg =~ 
+an01 +
+an02 +
+an03 +
+an04 +
+an05 +
+an06 +
+an07 +
+an08 +
+an09 +
+an10 +
+an11 +
+an12
+
+AnsEsc =~ 
+ae01 +
+ae02 +
+ae03 +
+ae04 +
+ae05 +
+ae06 +
+ae07 +
+ae08 +
+ae09 +
+ae10 +
+ae11 +
+ae12
+
+DifDec =~ 
+dd01 +
+dd02 +
+dd03 +
+dd04 +
+dd05 +
+dd06 +
+dd07 +
+dd08 +
+dd09 +
+dd10 +
+dd11 +
+dd12
+
+ConInt =~ 
+ci01 +
+ci02 +
+ci03 +
+ci04 +
+ci05 +
+ci06 +
+ci07 +
+ci08 +
+ci09 +
+ci10 +
+ci11 +
+ci12
+
+Indeci =~ 
+AfeNeg + 
+AnsEsc +
+DifDec +
+ConInt
+'
+
+# rodar AFC unifatorial
+fit_AFC_EAIC_hierarquica <- sem(
+  model = AFC_EAIC_hierarquica.model,
+  data = banco_andante,
+  ordered = names(banco_andante), 
+  estimator = "WLSMV"
+)
+```
+
+```{r}
+# visualizar resultados AFC
+summary(fit_AFC_EAIC_hierarquica, fit.measures=TRUE, standardized = TRUE)
+```
+
+## Precisão
+Afetividade Negativa
+```{r}
+# rodar alfa e omega
+reliability(
+  data = banco_andante,
+  vars = vars(
+    an01,
+    an02,
+    an03,
+    an04,
+    an05,
+    an06,
+    an07,
+    an08,
+    an09,
+    an10,
+    an11,
+    an12
+  ),
+  omegaScale = TRUE,
+  alphaItems = TRUE,
+  omegaItems = TRUE
+)
+```
+
+Ansiedade para Escolha
+```{r}
+# rodar alfa e omega
+reliability(
+  data = banco_andante,
+  vars = vars(
+    ae01,
+    ae02,
+    ae03,
+    ae04,
+    ae05,
+    ae06,
+    ae07,
+    ae08,
+    ae09,
+    ae10,
+    ae11,
+    ae12
+  ),
+  omegaScale = TRUE,
+  alphaItems = TRUE,
+  omegaItems = TRUE
+)
+```
+
+Dificuldade Decisional
+```{r}
+# rodar alfa e omega
+reliability(
+  data = banco_andante,
+  vars = vars(
+    dd01,
+    dd02,
+    dd03,
+    dd04,
+    dd05,
+    dd06,
+    dd07,
+    dd08,
+    dd09,
+    dd10,
+    dd11,
+    dd12
+  ),
+  omegaScale = TRUE,
+  alphaItems = TRUE,
+  omegaItems = TRUE
+)
+```
+
+Conflitos Interpessoais
+```{r}
+# rodar alfa e omega
+reliability(
+  data = banco_andante,
+  vars = vars(
+    ci01,
+    ci02,
+    ci03,
+    ci04,
+    ci05,
+    ci06,
+    ci07,
+    ci08,
+    ci09,
+    ci10,
+    ci11,
+    ci12
+  ),
+  omegaScale = TRUE,
+  alphaItems = TRUE,
+  omegaItems = TRUE
+)
+```
+
+Indecisão de Carreira
+```{r}
+# rodar alfa e omega
+reliability(
+  data = banco_andante,
+  vars = vars(
+    an01,
+    ae01,
+    dd01,
+    ci01,
+    an02,
+    ae02,
+    dd02,
+    ci02,
+    an03,
+    ae03,
+    dd03,
+    ci03,
+    an04,
+    ae04,
+    dd04,
+    ci04,
+    an05,
+    ae05,
+    dd05,
+    ci05,
+    an06,
+    ae06,
+    dd06,
+    ci06,
+    an07,
+    ae07,
+    dd07,
+    ci07,
+    an08,
+    ae08,
+    dd08,
+    ci08,
+    an09,
+    ae09,
+    dd09,
+    ci09,
+    an10,
+    ae10,
+    dd10,
+    ci10,
+    an11,
+    ae11,
+    dd11,
+    ci11,
+    an12,
+    ae12,
+    dd12,
+    ci12
+  ),
+  revItems = vars(
+    dd01, 
+    dd02,
+    dd03,
+    dd04, 
+    dd05, 
+    dd06,
+    dd07, 
+    dd08, 
+    dd09, 
+    dd10, 
+    dd11,
+    dd12
+  ),
+  omegaScale = TRUE,
+  alphaItems = TRUE,
+  omegaItems = TRUE
+)
+```
+
+
+# EAIP {.tabset .tabset-fade}
+
+## AFE 6 fatores
+```{r eval=FALSE, include=FALSE}
+# modelo
+AFE_EAIP.model <- '
+efa("efa")*f1 +
+efa("efa")*f2 +
+efa("efa")*f3 +
+efa("efa")*f4 +
+efa("efa")*f5 +
+efa("efa")*f6 =~ 
+EAIP1 +
+EAIP2 +
+EAIP3 +
+EAIP4 +
+EAIP5 +
+EAIP6 +
+EAIP7 +
+EAIP8 +
+EAIP9 +
+EAIP10 +
+EAIP11 +
+EAIP12 +
+EAIP13 +
+EAIP14 +
+EAIP15 +
+EAIP16 +
+EAIP17 +
+EAIP18 +
+EAIP19 +
+EAIP20 +
+EAIP21 +
+EAIP22 +
+EAIP23 +
+EAIP24 +
+EAIP25 +
+EAIP26 +
+EAIP27 +
+EAIP28 +
+EAIP29 +
+EAIP30 +
+EAIP31 +
+EAIP32 +
+EAIP33 +
+EAIP34 +
+EAIP35 +
+EAIP36 +
+EAIP37 +
+EAIP38 +
+EAIP39 +
+EAIP40 +
+EAIP41 +
+EAIP42 +
+EAIP43 +
+EAIP44 +
+EAIP45 +
+EAIP46 +
+EAIP47 +
+EAIP48 +
+EAIP49 +
+EAIP50 +
+EAIP51 +
+EAIP52 +
+EAIP53 +
+EAIP54 +
+EAIP55 +
+EAIP56 +
+EAIP57 +
+EAIP58 +
+EAIP59 +
+EAIP60 +
+EAIP61 +
+EAIP62 +
+EAIP63 +
+EAIP64 +
+EAIP65 +
+EAIP66 +
+EAIP67 +
+EAIP68 +
+EAIP69 +
+EAIP70 +
+EAIP71 +
+EAIP72 +
+EAIP73 +
+EAIP74 +
+EAIP75 +
+EAIP76 +
+EAIP77 +
+EAIP78 +
+EAIP79 +
+EAIP80 +
+EAIP81 +
+EAIP82 +
+EAIP83 +
+EAIP84 +
+EAIP85 +
+EAIP86 +
+EAIP87 +
+EAIP88 +
+EAIP89 +
+EAIP90 +
+EAIP91 +
+EAIP92 +
+EAIP93 +
+EAIP94 +
+EAIP95 +
+EAIP96 +
+EAIP97 +
+EAIP98 +
+EAIP99 +
+EAIP100 +
+EAIP101 +
+EAIP102 +
+EAIP103 +
+EAIP104 +
+EAIP105 +
+EAIP106 +
+EAIP107 +
+EAIP108
+'
+
+# rodar AFC unifatorial
+fit_AFE_EAIP <- sem(
+  model = AFE_EAIP.model,
+  data = banco_andante,
+  ordered = names(banco_andante), 
+  estimator = "WLSMV"
+)
+```
+
+```{r eval=FALSE, include=FALSE}
+# visualizar resultados AFC
+summary(fit_AFE_EAIP, fit.measures=TRUE, standardized = TRUE)
+```
+
+## AFC 18 fatores
+```{r eval=FALSE, include=FALSE}
+# modelo
+AFC_EAIP.model <- '
+R1 =~ 
+EAIP1 +
+EAIP2 +
+EAIP3 +
+EAIP4 +
+EAIP5 +
+EAIP6 
+R2 =~
+EAIP7 +
+EAIP8 +
+EAIP9 +
+EAIP10 +
+EAIP11 +
+EAIP12 
+R3 =~
+EAIP13 +
+EAIP14 +
+EAIP15 +
+EAIP16 +
+EAIP17 +
+EAIP18 
+
+I1 =~
+EAIP19 +
+EAIP20 +
+EAIP21 +
+EAIP22 +
+EAIP23 +
+EAIP24 
+I2 =~
+EAIP25 +
+EAIP26 +
+EAIP27 +
+EAIP28 +
+EAIP29 +
+EAIP30 
+I3 =~
+EAIP31 +
+EAIP32 +
+EAIP33 +
+EAIP34 +
+EAIP35 +
+EAIP36 
+
+A1 =~
+EAIP37 +
+EAIP38 +
+EAIP39 +
+EAIP40 +
+EAIP41 +
+EAIP42 
+A2 =~
+EAIP43 +
+EAIP44 +
+EAIP45 +
+EAIP46 +
+EAIP47 +
+EAIP48 
+A3 =~
+EAIP49 +
+EAIP50 +
+EAIP51 +
+EAIP52 +
+EAIP53 +
+EAIP54 
+
+S1 =~
+EAIP55 +
+EAIP56 +
+EAIP57 +
+EAIP58 +
+EAIP59 +
+EAIP60 
+S2 =~
+EAIP61 +
+EAIP62 +
+EAIP63 +
+EAIP64 +
+EAIP65 +
+EAIP66 
+S3 =~
+EAIP67 +
+EAIP68 +
+EAIP69 +
+EAIP70 +
+EAIP71 +
+EAIP72 
+
+E1 =~
+EAIP73 +
+EAIP74 +
+EAIP75 +
+EAIP76 +
+EAIP77 +
+EAIP78 
+E2 =~
+EAIP79 +
+EAIP80 +
+EAIP81 +
+EAIP82 +
+EAIP83 +
+EAIP84 
+E3 =~
+EAIP85 +
+EAIP86 +
+EAIP87 +
+EAIP88 +
+EAIP89 +
+EAIP90 
+
+C1 =~
+EAIP91 +
+EAIP92 +
+EAIP93 +
+EAIP94 +
+EAIP95 +
+EAIP96 
+C2 =~
+EAIP97 +
+EAIP98 +
+EAIP99 +
+EAIP100 +
+EAIP101 +
+EAIP102 
+C3 =~
+EAIP103 +
+EAIP104 +
+EAIP105 +
+EAIP106 +
+EAIP107 +
+EAIP108
+'
+
+# rodar AFC unifatorial
+fit_AFC_EAIP <- sem(
+  model = AFC_EAIP.model,
+  data = banco_andante,
+  ordered = names(banco_andante), 
+  estimator = "WLSMV"
+)
+```
+
+```{r eval=FALSE, include=FALSE}
+# visualizar resultados AFC
+summary(fit_AFC_EAIP, fit.measures=TRUE, standardized = TRUE)
+```
+
+
+## AFC hierárquica
+
+## Precisão
+
+
+
+
+# Relações com variáveis externas {.tabset .tabset-fade}
+
+## EAE-EP
+
+## CIP-20
+
+## 18REST
+
+
+
+
+
+# Conclusion {.unnumbered}
+
+::: {#box1 .green-box}
+Wrapping it up!
+:::
+
+::: {#box2 .info-box .caution}
+-   *Cras tincidunt* felis venenatis pretium iaculis[^2].
+-   Curabitur in **tortor at tellus** fermentum elementum vel quis sem.
+-   That sums it up!
+:::
+
+[^2]: In eget eros sit amet leo feugiat consequat
+
+::: {#box3 .info-box .warning}
+Be careful, be gentle, be brave! And remember the above [box!](#box1)
+:::
+
+::: {.info-box .tip}
+A tip!
+:::
+
+::: {.info-box .note}
+A note!
+:::
+
+::: {.info-box .important}
+I have something **important** to say here!
+:::
+
+::: {#box4 .orange-box}
+An orange box!!!
+:::
+
+# R session info {.unnumbered}
+
+```{r session info, comment=""}
+xfun::session_info()
+```
+
+# References {.unnumbered}
